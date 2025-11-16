@@ -128,7 +128,7 @@ class _SankeyComplexDiagramWidgetState
           selectedNodeId: selectedNodeId,
           onNodeTap: _handleNodeTap,
           size: const Size(1000, 600),
-          showLabels: true,
+          showLabels: false,
         ),
       ),
     );

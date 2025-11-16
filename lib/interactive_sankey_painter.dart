@@ -13,7 +13,6 @@ import 'package:sankey_flutter/sankey_painter.dart';
 class InteractiveSankeyPainter extends SankeyPainter {
   /// Map of node labels to specific colors
   final Map<String, Color> nodeColors;
-  final bool showTexture;
 
   /// ID of the currently selected node, if any
   final int? selectedNodeId;
@@ -24,7 +23,6 @@ class InteractiveSankeyPainter extends SankeyPainter {
     required this.nodeColors,
     this.selectedNodeId,
     bool showLabels = true,
-    this.showTexture = true,
     Color linkColor = Colors.grey,
   }) : super(
           showLabels: showLabels,
@@ -44,44 +42,26 @@ class InteractiveSankeyPainter extends SankeyPainter {
       final source = link.source as SankeyNode;
       final target = link.target as SankeyNode;
 
-      var sourceColor = nodeColors[source.label] ?? Colors.blue;
-      var targetColor = nodeColors[target.label] ?? Colors.blue;
+      final sourceColor = nodeColors[source.label] ?? Colors.blue;
+      final targetColor = nodeColors[target.label] ?? Colors.blue;
+      var blended = blendColors(sourceColor, targetColor);
 
       // Highlight links connected to the selected node
       final isConnected = (selectedNodeId != null) &&
           (source.id == selectedNodeId || target.id == selectedNodeId);
-      sourceColor = sourceColor.withAlpha(isConnected ? 225 : 80);
-      targetColor = targetColor.withAlpha(isConnected ? 225 : 80);
-      
-      final gradient = LinearGradient(
-       colors: [sourceColor, targetColor], 
-       stops: [0.2, 0.8],
-    );
+      blended = blended.withOpacity(isConnected ? 0.9 : 0.5);
 
       final linkPaint = Paint()
-        ..shader = gradient.createShader(Rect.fromLTWH(source.x1, source.y1, target.x0 - source.x1, target.y0 - source.y1))
+        ..color = blended
         ..style = PaintingStyle.stroke
         ..strokeWidth = link.width;
 
-      var path = Path();
+      final path = Path();
       final xMid = (source.x1 + target.x0) / 2;
       path.moveTo(source.x1, link.y0);
       path.cubicTo(xMid, link.y0, xMid, link.y1, target.x0, link.y1);
-      canvas.drawPath(path, linkPaint);
 
-      // --- Paint texture ---
-      if (showTexture) {
-        final texturePaint = Paint()
-          ..color = Colors.white30
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 1;
-        for (var i = link.width / -2; i < link.width; i = i+10) {
-          path = Path();
-          path.moveTo(source.x1, link.y0 + i);
-          path.cubicTo(xMid, link.y0 + i, xMid, link.y1 + i, target.x0, link.y1 + i);
-          canvas.drawPath(path, texturePaint);
-        }
-      }
+      canvas.drawPath(path, linkPaint);
     }
 
     // --- Draw colored nodes and labels with selection borders ---
@@ -94,19 +74,11 @@ class InteractiveSankeyPainter extends SankeyPainter {
       canvas.drawRect(rect, Paint()..color = color);
 
       if (isSelected) {
-        final hsl = HSLColor.fromColor(color);
-        final contrast = hsl.withHue(hsl.hue > 180 ? hsl.hue - 180 : hsl.hue + 180);
         final borderPaint = Paint()
-          ..color = contrast.toColor() 
+          ..color = Colors.yellow
           ..style = PaintingStyle.stroke
           ..strokeWidth = 4;
         canvas.drawRect(rect, borderPaint);
-      } else {
-        final borderPaint = Paint()
-          ..color = Colors.white24
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2;
-        canvas.drawRect(rect.deflate(2), borderPaint);
       }
 
       final isDark = color.computeLuminance() < 0.05;
@@ -146,13 +118,5 @@ class InteractiveSankeyPainter extends SankeyPainter {
         textPainter.paint(canvas, labelOffset);
       }
     }
-  }
-  
-  @override
-  bool shouldRepaint(covariant InteractiveSankeyPainter oldDelegate) {
-    if(oldDelegate.selectedNodeId != selectedNodeId) {
-      return true;
-    }
-    return super.shouldRepaint(oldDelegate);
   }
 }

@@ -52,7 +52,7 @@ class SankeyPainter extends CustomPainter {
       final blendedColor = Color.lerp(Colors.transparent, linkColor, 0.5)!;
 
       final paint = Paint()
-        ..color = blendedColor.withAlpha(128)
+        ..color = blendedColor.withOpacity(0.5)
         ..style = PaintingStyle.stroke
         ..strokeWidth = link.width;
 
