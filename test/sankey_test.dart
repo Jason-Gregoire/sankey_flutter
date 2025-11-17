@@ -16,10 +16,10 @@ double _r(double x, [int precision = 2]) {
 
 Map<String, dynamic> roundNode(SankeyNode node) {
   return {
-    "x": _r(node.x0),
-    "dx": _r(node.x1 - node.x0),
-    "y": _r(node.y0),
-    "dy": _r(node.y1 - node.y0),
+    "x": _r(node.left),
+    "dx": _r(node.right - node.left),
+    "y": _r(node.top),
+    "dy": _r(node.bottom - node.top),
   };
 }
 
@@ -31,8 +31,8 @@ Map<String, dynamic> roundLink(SankeyLink link) {
     "source": roundNode(source),
     "target": roundNode(target),
     "dy": _r(link.width),
-    "sy": _r(link.y0 - source.y0 - link.width / 2),
-    "ty": _r(link.y1 - target.y0 - link.width / 2),
+    "sy": _r(link.ySourceStart - source.top - link.width / 2),
+    "ty": _r(link.yTargetEnd - target.top - link.width / 2),
   };
 }
 

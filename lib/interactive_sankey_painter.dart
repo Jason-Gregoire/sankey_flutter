@@ -59,14 +59,14 @@ class InteractiveSankeyPainter extends SankeyPainter {
     );
 
       final linkPaint = Paint()
-        ..shader = gradient.createShader(Rect.fromLTWH(source.x1, source.y1, target.x0 - source.x1, target.y0 - source.y1))
+        ..shader = gradient.createShader(Rect.fromLTWH(source.right, source.bottom, target.left - source.right, target.top - source.bottom))
         ..style = PaintingStyle.stroke
         ..strokeWidth = link.width;
 
       var path = Path();
-      final xMid = (source.x1 + target.x0) / 2;
-      path.moveTo(source.x1, link.y0);
-      path.cubicTo(xMid, link.y0, xMid, link.y1, target.x0, link.y1);
+      final xMid = (source.right + target.left) / 2;
+      path.moveTo(source.right, link.ySourceStart);
+      path.cubicTo(xMid, link.ySourceStart, xMid, link.yTargetEnd, target.left, link.yTargetEnd);
       canvas.drawPath(path, linkPaint);
 
       // --- Paint texture ---
@@ -77,8 +77,8 @@ class InteractiveSankeyPainter extends SankeyPainter {
           ..strokeWidth = 1;
         for (var i = link.width / -2; i < link.width; i = i+10) {
           path = Path();
-          path.moveTo(source.x1, link.y0 + i);
-          path.cubicTo(xMid, link.y0 + i, xMid, link.y1 + i, target.x0, link.y1 + i);
+          path.moveTo(source.right, link.ySourceStart + i);
+          path.cubicTo(xMid, link.ySourceStart + i, xMid, link.yTargetEnd + i, target.left, link.yTargetEnd + i);
           canvas.drawPath(path, texturePaint);
         }
       }
@@ -88,7 +88,7 @@ class InteractiveSankeyPainter extends SankeyPainter {
     for (SankeyNode node in nodes) {
       final color = nodeColors[node.label] ?? Colors.blue;
       final rect =
-          Rect.fromLTWH(node.x0, node.y0, node.x1 - node.x0, node.y1 - node.y0);
+          Rect.fromLTWH(node.left, node.top, node.right - node.left, node.bottom - node.top);
       final isSelected = selectedNodeId != null && node.id == selectedNodeId;
 
       canvas.drawRect(rect, Paint()..color = color);

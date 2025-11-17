@@ -44,10 +44,10 @@ class SankeyPainter extends CustomPainter {
       final target = link.target as SankeyNode;
 
       final path = Path();
-      final xMid = (source.x1 + target.x0) / 2;
+      final xMid = (source.right + target.left) / 2;
 
-      path.moveTo(source.x1, link.y0);
-      path.cubicTo(xMid, link.y0, xMid, link.y1, target.x0, link.y1);
+      path.moveTo(source.right, link.ySourceStart);
+      path.cubicTo(xMid, link.ySourceStart, xMid, link.yTargetEnd, target.left, link.yTargetEnd);
 
       final blendedColor = Color.lerp(Colors.transparent, linkColor, 0.5)!;
 
@@ -62,10 +62,10 @@ class SankeyPainter extends CustomPainter {
     // --- Draw nodes and optional labels ---
     for (final node in nodes) {
       final rect = Rect.fromLTWH(
-        node.x0,
-        node.y0,
-        node.x1 - node.x0,
-        node.y1 - node.y0,
+        node.left,
+        node.top,
+        node.right - node.left,
+        node.bottom - node.top,
       );
 
       final paint = Paint()..color = nodeColor;
@@ -86,8 +86,8 @@ class SankeyPainter extends CustomPainter {
           textDirection: TextDirection.ltr,
         )..layout();
 
-        final labelX = node.x1 + 6;
-        final labelY = node.y0 + (node.y1 - node.y0 - textPainter.height) / 2;
+        final labelX = node.right + 6;
+        final labelY = node.top + (node.bottom - node.top - textPainter.height) / 2;
         final labelOffset = Offset(labelX, labelY);
 
         if (labelX + textPainter.width <= size.width) {

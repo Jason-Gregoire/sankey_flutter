@@ -108,13 +108,12 @@ Map<String, Color> generateDefaultNodeColorMap(List<SankeyNode> nodes) {
 ///
 /// [nodes] is the list of [SankeyNode] objects and [tapPos] is the [Offset] of
 /// the tap event in the canvas coordinate space
-int? detectTappedNode(List<SankeyNode> nodes, Offset tapPos) {
-  for (var node in nodes) {
-    final rect =
-        Rect.fromLTWH(node.x0, node.y0, node.x1 - node.x0, node.y1 - node.y0);
-    if (rect.contains(tapPos)) return node.id;
+SankeyNode? detectTappedNode(List<SankeyNode> nodes, Offset tapPos) {
+  try {
+    return nodes.firstWhere((node) => node.contains(tapPos));
+  } on StateError {
+    return null;
   }
-  return null;
 }
 
 /// Combines nodes and links with layout logic
@@ -168,6 +167,7 @@ class SankeyDiagramWidget extends StatelessWidget {
   final Map<String, Color> nodeColors;
   final int? selectedNodeId;
   final Function(int?)? onNodeTap;
+  final Function(SankeyNode?)? onNodeSelected;
   final Size size;
   final bool showLabels;
 
@@ -176,7 +176,9 @@ class SankeyDiagramWidget extends StatelessWidget {
     required this.data,
     required this.nodeColors,
     this.selectedNodeId,
+    @Deprecated('prefer onNodeSelected which supplies all the node features, including id')
     this.onNodeTap,
+    this.onNodeSelected,
     this.size = const Size(1000, 600),
     this.showLabels = true,
   }) : super(key: key);
@@ -185,8 +187,13 @@ class SankeyDiagramWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (details) {
-        final tapped = detectTappedNode(data.nodes, details.localPosition);
-        if (onNodeTap != null) onNodeTap!(tapped);
+          final tapped = detectTappedNode(data.nodes, details.localPosition);
+        if (onNodeTap != null) {
+          onNodeTap!(tapped?.id);
+        }
+        if (onNodeSelected != null) {
+          onNodeSelected!(tapped);
+        }
       },
       child: CustomPaint(
         size: size,
