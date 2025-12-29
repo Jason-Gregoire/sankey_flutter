@@ -240,8 +240,8 @@ class Sankey {
       int layer = align(node, maxDepth);
       layer = layer.clamp(0, maxDepth - 1);
       node.layer = layer;
-      node.x0 = x0 + layer * kx;
-      node.x1 = node.x0 + nodeWidth;
+      node.left = x0 + layer * kx;
+      node.right = node.left + nodeWidth;
       columns[layer].add(node);
     }
     if (nodeSort != null) {
@@ -271,9 +271,9 @@ class Sankey {
     for (List<SankeyNode> column in columns) {
       double y = y0;
       for (SankeyNode node in column) {
-        node.y0 = y;
-        node.y1 = y + node.value * ky;
-        y = node.y1 + nodePadding;
+        node.top = y;
+        node.bottom = y + node.value * ky;
+        y = node.bottom + nodePadding;
         // Set the computed link widths
         for (SankeyLink link in node.sourceLinks) {
           link.width = link.value * ky;
@@ -282,8 +282,8 @@ class Sankey {
       // Add extra vertical spacing
       double spacing = (y1 - y + nodePadding) / (column.length + 1);
       for (int i = 0; i < column.length; i++) {
-        column[i].y0 += spacing * (i + 1);
-        column[i].y1 += spacing * (i + 1);
+        column[i].top += spacing * (i + 1);
+        column[i].bottom += spacing * (i + 1);
       }
       // Reorder node links to match the JS implementation
       _reorderLinks(column);
@@ -317,14 +317,14 @@ class Sankey {
   /// and the ending position [y1] for incoming links, adjusting for the link width
   void _computeLinkBreadths(List<SankeyNode> nodes) {
     for (SankeyNode node in nodes) {
-      double offset = node.y0;
+      double offset = node.top;
       for (SankeyLink link in node.sourceLinks) {
-        link.y0 = offset + link.width / 2;
+        link.ySourceStart = offset + link.width / 2;
         offset += link.width;
       }
-      offset = node.y0;
+      offset = node.top;
       for (SankeyLink link in node.targetLinks) {
-        link.y1 = offset + link.width / 2;
+        link.yTargetEnd = offset + link.width / 2;
         offset += link.width;
       }
     }
@@ -349,14 +349,14 @@ class Sankey {
           weightSum += weight;
         }
         if (weightSum > 0) {
-          double dy = (ySum / weightSum - target.y0) * alpha;
-          target.y0 += dy;
-          target.y1 += dy;
+          double dy = (ySum / weightSum - target.top) * alpha;
+          target.top += dy;
+          target.bottom += dy;
           _reorderNodeLinks(target);
         }
       }
       if (nodeSort == null) {
-        columns[i].sort((a, b) => a.y0.compareTo(b.y0));
+        columns[i].sort((a, b) => a.top.compareTo(b.top));
       }
       _resolveCollisions(columns[i], beta);
     }
@@ -380,14 +380,14 @@ class Sankey {
           weightSum += weight;
         }
         if (weightSum > 0) {
-          double dy = (ySum / weightSum - source.y0) * alpha;
-          source.y0 += dy;
-          source.y1 += dy;
+          double dy = (ySum / weightSum - source.top) * alpha;
+          source.top += dy;
+          source.bottom += dy;
           _reorderNodeLinks(source);
         }
       }
       if (nodeSort == null) {
-        columns[i].sort((a, b) => a.y0.compareTo(b.y0));
+        columns[i].sort((a, b) => a.top.compareTo(b.top));
       }
       _resolveCollisions(columns[i], beta);
     }
@@ -402,9 +402,9 @@ class Sankey {
     if (column.isEmpty) return;
     int mid = column.length ~/ 2;
     _resolveCollisionsBottomToTop(
-        column, column[mid].y0 - nodePadding, mid - 1, alpha);
+        column, column[mid].top - nodePadding, mid - 1, alpha);
     _resolveCollisionsTopToBottom(
-        column, column[mid].y1 + nodePadding, mid + 1, alpha);
+        column, column[mid].bottom + nodePadding, mid + 1, alpha);
     _resolveCollisionsBottomToTop(column, y1, column.length - 1, alpha);
     _resolveCollisionsTopToBottom(column, y0, 0, alpha);
   }
@@ -414,12 +414,12 @@ class Sankey {
       List<SankeyNode> column, double y, int startIndex, double alpha) {
     for (int i = startIndex; i < column.length; i++) {
       SankeyNode node = column[i];
-      double dy = (y - node.y0) * alpha;
+      double dy = (y - node.top) * alpha;
       if (dy > 1e-6) {
-        node.y0 += dy;
-        node.y1 += dy;
+        node.top += dy;
+        node.bottom += dy;
       }
-      y = node.y1 + nodePadding;
+      y = node.bottom + nodePadding;
     }
   }
 
@@ -428,12 +428,12 @@ class Sankey {
       List<SankeyNode> column, double y, int startIndex, double alpha) {
     for (int i = startIndex; i >= 0; i--) {
       SankeyNode node = column[i];
-      double dy = (node.y1 - y) * alpha;
+      double dy = (node.bottom - y) * alpha;
       if (dy > 1e-6) {
-        node.y0 -= dy;
-        node.y1 -= dy;
+        node.top -= dy;
+        node.bottom -= dy;
       }
-      y = node.y0 - nodePadding;
+      y = node.top - nodePadding;
     }
   }
 
@@ -448,12 +448,12 @@ class Sankey {
     if (linkSort == null) {
       node.sourceLinks.sort((a, b) {
         int cmp =
-            (a.target as SankeyNode).y0.compareTo((b.target as SankeyNode).y0);
+            (a.target as SankeyNode).top.compareTo((b.target as SankeyNode).top);
         return cmp != 0 ? cmp : a.index.compareTo(b.index);
       });
       node.targetLinks.sort((a, b) {
         int cmp =
-            (a.source as SankeyNode).y0.compareTo((b.source as SankeyNode).y0);
+            (a.source as SankeyNode).top.compareTo((b.source as SankeyNode).top);
         return cmp != 0 ? cmp : a.index.compareTo(b.index);
       });
     }
@@ -468,14 +468,14 @@ class Sankey {
       for (SankeyNode node in nodes) {
         node.sourceLinks.sort((a, b) {
           int cmp = (a.target as SankeyNode)
-              .y0
-              .compareTo((b.target as SankeyNode).y0);
+              .top
+              .compareTo((b.target as SankeyNode).top);
           return cmp != 0 ? cmp : a.index.compareTo(b.index);
         });
         node.targetLinks.sort((a, b) {
           int cmp = (a.source as SankeyNode)
-              .y0
-              .compareTo((b.source as SankeyNode).y0);
+              .top
+              .compareTo((b.source as SankeyNode).top);
           return cmp != 0 ? cmp : a.index.compareTo(b.index);
         });
       }
@@ -488,7 +488,7 @@ class Sankey {
   /// This is computed by starting from the source node's top position, adjusting
   /// for the link widths and padding until the target node is reached
   double _targetTop(SankeyNode source, SankeyNode target) {
-    double y = source.y0 - (source.sourceLinks.length - 1) * nodePadding / 2;
+    double y = source.top - (source.sourceLinks.length - 1) * nodePadding / 2;
     for (SankeyLink link in source.sourceLinks) {
       SankeyNode t = link.target as SankeyNode;
       if (t == target) break;
@@ -508,7 +508,7 @@ class Sankey {
   /// This is computed by starting from the target node's top position and adjusting
   /// for the widths of incoming links, ensuring a visually balanced position
   double _sourceTop(SankeyNode source, SankeyNode target) {
-    double y = target.y0 - (target.targetLinks.length - 1) * nodePadding / 2;
+    double y = target.top - (target.targetLinks.length - 1) * nodePadding / 2;
     for (SankeyLink link in target.targetLinks) {
       SankeyNode s = link.source as SankeyNode;
       if (s == source) break;

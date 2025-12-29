@@ -112,9 +112,9 @@ class _SankeyComplexDiagramWidgetState
   ///
   /// When a node is tapped, its [id] is stored in [selectedNodeId],
   /// triggering a rebuild that highlights the node
-  void _handleNodeTap(int? nodeId) {
+  void _handleNodeTap(SankeyNode? node) {
     setState(() {
-      selectedNodeId = nodeId;
+      selectedNodeId = node?.id;
     });
   }
 
@@ -126,9 +126,9 @@ class _SankeyComplexDiagramWidgetState
           data: sankeyDataSet,
           nodeColors: nodeColors,
           selectedNodeId: selectedNodeId,
-          onNodeTap: _handleNodeTap,
+          onNodeSelected: _handleNodeTap,
           size: const Size(1000, 600),
-          showLabels: false,
+          showLabels: true,
         ),
       ),
     );

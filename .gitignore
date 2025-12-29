@@ -1,8 +1,12 @@
 # Dart/Flutter specific
 .dart_tool/
+.metadata
 .packages
 .pub/
 build/
+web/
+analysis_options.yaml
+lib/main.dart
 pubspec.lock
 
 # IDEs

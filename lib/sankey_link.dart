@@ -6,8 +6,8 @@ class SankeyLink {
   dynamic target; // Resolved SankeyNode
   double value;
   int index = 0;
-  double y0 = 0.0; // Vertical start position at source
-  double y1 = 0.0; // Vertical end position at target
+  double ySourceStart = 0.0; // Vertical start position at source
+  double yTargetEnd = 0.0; // Vertical end position at target
   double width = 0.0; // Proportional width of the link
 
   SankeyLink({required this.source, required this.target, required this.value});
