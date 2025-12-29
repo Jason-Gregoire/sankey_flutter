@@ -5,7 +5,7 @@
 
 A Flutter package for rendering beautiful and interactive Sankey diagrams. This package adapts the proven [d3-sankey](https://github.com/d3/d3-sankey) layout algorithm into Dart, enabling complex node-link flow diagrams with high performance directly in your Flutter apps.
 
-![Sankey Diagram Example](https://raw.githubusercontent.com/Jason-Gregoire/sankey_flutter/main/doc/sankey_example.png)
+![Sankey Diagram Example](https://raw.githubusercontent.com/Jason-Gregoire/sankey_flutter/main/doc/sankey_example.png?v=0.0.3)
 
 ## What's New in v0.0.3
 
