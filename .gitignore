@@ -25,3 +25,13 @@ Thumbs.db
 
 # Coverage
 coverage/
+
+# Platform-specific (auto-generated)
+windows/
+linux/
+macos/
+android/
+ios/
+
+# Claude Code
+.claude/

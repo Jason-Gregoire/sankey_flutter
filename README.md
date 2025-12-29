@@ -1,8 +1,20 @@
 # Sankey Flutter
 
-**Version:** 0.0.3
+[![pub package](https://img.shields.io/pub/v/sankey_flutter.svg)](https://pub.dev/packages/sankey_flutter)
+[![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD--3--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 A Flutter package for rendering beautiful and interactive Sankey diagrams. This package adapts the proven [d3-sankey](https://github.com/d3/d3-sankey) layout algorithm into Dart, enabling complex node-link flow diagrams with high performance directly in your Flutter apps.
+
+![Sankey Diagram Example](https://raw.githubusercontent.com/Jason-Gregoire/sankey_flutter/main/doc/sankey_example.png)
+
+## What's New in v0.0.3
+
+- **Gradient Links** - Smooth color transitions between source and target nodes
+- **Texture Overlay** - Optional subtle patterns on links for enhanced visual depth
+- **HSL Selection Borders** - Contrasting borders on selected nodes using intelligent color manipulation
+- **Type Safety** - Strongly typed `SankeyLink.source` and `SankeyLink.target` as `SankeyNode`
+- **Improved API** - New `onNodeSelected(SankeyNode?)` callback with full node object access
+- **Responsive Example** - Demo app with `LayoutBuilder` for adaptive sizing
 
 ## Features
 
@@ -13,8 +25,6 @@ A Flutter package for rendering beautiful and interactive Sankey diagrams. This 
 - **Customizable Appearance:** Adjust node width, padding, alignment, colors, and theming
 - **Responsive Design:** Built-in support for responsive layouts using LayoutBuilder
 - **Toggleable Labels:** Show or hide node labels as needed
-
-![Sankey Diagram Example](https://raw.githubusercontent.com/Jason-Gregoire/sankey_flutter/main/doc/sankey_example.png)
 
 ## Installation
 

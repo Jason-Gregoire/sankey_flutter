@@ -1,4 +1,4 @@
-## [0.0.3] - Gradient Rendering & API Improvements
+## [0.0.3] - 2025-12-29 - Gradient Rendering & API Improvements
 
 ### ✨ New Features
 - **Gradient link rendering**: Links now use `LinearGradient` shaders for smooth color transitions between source and target nodes.
