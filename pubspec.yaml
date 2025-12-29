@@ -1,6 +1,6 @@
 name: sankey_flutter
-description: About Flutter package for Sankey diagrams (flow charts).
-version: 0.0.2
+description: Flutter package for interactive Sankey diagrams with gradient links, node selection, and d3-sankey layout algorithm.
+version: 0.0.3
 homepage: https://github.com/Jason-Gregoire/sankey_flutter
 repository: https://github.com/Jason-Gregoire/sankey_flutter
 issue_tracker: https://github.com/Jason-Gregoire/sankey_flutter/issues

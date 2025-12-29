@@ -100,6 +100,8 @@ class SankeyPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant SankeyPainter oldDelegate) {
-    return oldDelegate.nodes != nodes || oldDelegate.links != links;
+    return oldDelegate.nodes != nodes ||
+        oldDelegate.links != links ||
+        oldDelegate.showLabels != showLabels;
   }
 }

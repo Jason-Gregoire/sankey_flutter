@@ -151,9 +151,9 @@ class InteractiveSankeyPainter extends SankeyPainter {
   
   @override
   bool shouldRepaint(covariant InteractiveSankeyPainter oldDelegate) {
-    if(oldDelegate.selectedNodeId != selectedNodeId) {
-      return true;
-    }
-    return super.shouldRepaint(oldDelegate);
+    return oldDelegate.selectedNodeId != selectedNodeId ||
+        oldDelegate.showLabels != showLabels ||
+        oldDelegate.showTexture != showTexture ||
+        super.shouldRepaint(oldDelegate);
   }
 }

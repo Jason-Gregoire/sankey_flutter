@@ -11,7 +11,7 @@
 - **Improved field names**: Renamed node position fields from `x0/x1/y0/y1` to `left/right/top/bottom` for clarity.
 - **Efficient hit testing**: Added `SankeyNode.contains(Offset)` method for cleaner tap detection.
 - **Subtle node borders**: Unselected nodes now show subtle white borders for better visual definition.
-- **`shouldRepaint` optimization**: `InteractiveSankeyPainter` now properly triggers repaints when selection state changes.
+- **`shouldRepaint` fix**: `InteractiveSankeyPainter` now properly triggers repaints when `selectedNodeId`, `showLabels`, or `showTexture` change.
 - **Responsive example**: Example app now uses `LayoutBuilder` to adapt to screen size.
 
 ### ⚠️ Breaking Changes
