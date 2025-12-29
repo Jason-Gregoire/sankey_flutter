@@ -40,8 +40,8 @@ class SankeyPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // --- Draw links first, behind nodes ---
     for (SankeyLink link in links) {
-      final source = link.source as SankeyNode;
-      final target = link.target as SankeyNode;
+      final source = link.source;
+      final target = link.target;
 
       final path = Path();
       final xMid = (source.right + target.left) / 2;
@@ -71,9 +71,9 @@ class SankeyPainter extends CustomPainter {
       final paint = Paint()..color = nodeColor;
       canvas.drawRect(rect, paint);
 
-      if (showLabels && node.label != null) {
+      if (showLabels) {
         final textSpan = TextSpan(
-          text: node.label,
+          text: node.displayLabel,
           style: const TextStyle(
             color: Colors.black,
             fontSize: 12,
@@ -87,7 +87,8 @@ class SankeyPainter extends CustomPainter {
         )..layout();
 
         final labelX = node.right + 6;
-        final labelY = node.top + (node.bottom - node.top - textPainter.height) / 2;
+        final labelY =
+            node.top + (node.bottom - node.top - textPainter.height) / 2;
         final labelOffset = Offset(labelX, labelY);
 
         if (labelX + textPainter.width <= size.width) {

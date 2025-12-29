@@ -41,10 +41,7 @@ int sankeyJustify(SankeyNode node, int n) =>
 int sankeyCenter(SankeyNode node, int n) {
   if (node.targetLinks.isNotEmpty) return node.depth;
   if (node.sourceLinks.isNotEmpty)
-    return (node.sourceLinks
-            .map((link) => (link.target as SankeyNode).depth)
-            .reduce(min)) -
-        1;
+    return (node.sourceLinks.map((link) => link.target.depth).reduce(min)) - 1;
   return 0;
 }
 
@@ -60,11 +57,20 @@ int sankeyCenter(SankeyNode node, int n) {
 /// 6. Compute the widths of the links
 /// 7. Return a [SankeyGraph] containing the positioned nodes and links
 ///
-/// The bounds of the layout are defined by `[x0, y0]` and `[x1, y1]`,
+/// The bounds of the layout are defined by `[leftBound, topBound]` and `[rightBound, bottomBound]`,
 /// while `nodeWidth` and `nodePadding` determine the size and spacing of nodes
 class Sankey {
-  // Extent bounds.
-  double x0, y0, x1, y1;
+  /// Left edge of the layout area
+  double leftBound;
+
+  /// Top edge of the layout area
+  double topBound;
+
+  /// Right edge of the layout area
+  double rightBound;
+
+  /// Bottom edge of the layout area
+  double bottomBound;
 
   // Node width and padding
   double nodeWidth;
@@ -85,10 +91,10 @@ class Sankey {
   ///
   /// If no [align] function is provided, it defaults to [sankeyJustify]
   Sankey({
-    this.x0 = 0,
-    this.y0 = 0,
-    this.x1 = 1,
-    this.y1 = 1,
+    this.leftBound = 0,
+    this.topBound = 0,
+    this.rightBound = 1,
+    this.bottomBound = 1,
     this.nodeWidth = 24,
     this.nodePadding = 8,
     NodeAlign? align,
@@ -128,15 +134,8 @@ class Sankey {
     for (int i = 0; i < links.length; i++) {
       SankeyLink link = links[i];
       link.index = i;
-      // Assume that source and target are already SankeyNodes
-      SankeyNode source = link.source is SankeyNode
-          ? link.source as SankeyNode
-          : throw Exception("Link source is not a SankeyNode");
-      SankeyNode target = link.target is SankeyNode
-          ? link.target as SankeyNode
-          : throw Exception("Link target is not a SankeyNode");
-      source.sourceLinks.add(link);
-      target.targetLinks.add(link);
+      link.source.sourceLinks.add(link);
+      link.target.targetLinks.add(link);
     }
     // Optionally sort links if a sort function is provided
     if (linkSort != null) {
@@ -181,9 +180,8 @@ class Sankey {
       for (SankeyNode node in current) {
         node.depth = depth;
         for (SankeyLink link in node.sourceLinks) {
-          SankeyNode target = link.target as SankeyNode;
-          if (!next.contains(target)) {
-            next.add(target);
+          if (!next.contains(link.target)) {
+            next.add(link.target);
           }
         }
       }
@@ -210,9 +208,8 @@ class Sankey {
       for (SankeyNode node in current) {
         node.height = height;
         for (SankeyLink link in node.targetLinks) {
-          SankeyNode source = link.source as SankeyNode;
-          if (!next.contains(source)) {
-            next.add(source);
+          if (!next.contains(link.source)) {
+            next.add(link.source);
           }
         }
       }
@@ -228,19 +225,20 @@ class Sankey {
   /// Computes the columns (or layers) of nodes based on their horizontal position
   ///
   /// The maximum depth is computed and each node is assigned a layer value using
-  /// the provided [align] function. Horizontal positions [x0] and [x1] are then
-  /// calculated for each node. Optionally, nodes can be sorted using [nodeSort]
+  /// the provided [align] function. Horizontal positions are then calculated
+  /// for each node. Optionally, nodes can be sorted using [nodeSort]
   List<List<SankeyNode>> _computeNodeLayers(List<SankeyNode> nodes) {
     // Determine the maximum depth
     int maxDepth = nodes.map((node) => node.depth).reduce(max) + 1;
     // Compute horizontal spacing
-    double kx = maxDepth > 1 ? (x1 - x0 - nodeWidth) / (maxDepth - 1) : 0;
+    double kx =
+        maxDepth > 1 ? (rightBound - leftBound - nodeWidth) / (maxDepth - 1) : 0;
     List<List<SankeyNode>> columns = List.generate(maxDepth, (_) => []);
     for (SankeyNode node in nodes) {
       int layer = align(node, maxDepth);
       layer = layer.clamp(0, maxDepth - 1);
       node.layer = layer;
-      node.left = x0 + layer * kx;
+      node.left = leftBound + layer * kx;
       node.right = node.left + nodeWidth;
       columns[layer].add(node);
     }
@@ -255,7 +253,7 @@ class Sankey {
   /// Computes the vertical positions and sizes of nodes
   ///
   /// This method first computes the vertical scaling factor `ky` for each column,
-  /// then assigns positions [y0] and [y1] to each node accordingly. It also computes
+  /// then assigns vertical positions to each node accordingly. It also computes
   /// the width of each link based on the scaling factor. Finally, extra spacing is added
   /// and node links are reordered to match the behavior of d3‑sankey
   void _initializeNodeBreadths(List<List<SankeyNode>> columns) {
@@ -264,12 +262,13 @@ class Sankey {
     for (List<SankeyNode> column in columns) {
       double columnSum = column.fold(0.0, (prev, node) => prev + node.value);
       if (column.isNotEmpty) {
-        ky = min(ky, (y1 - y0 - (column.length - 1) * nodePadding) / columnSum);
+        ky = min(ky,
+            (bottomBound - topBound - (column.length - 1) * nodePadding) / columnSum);
       }
     }
     // Position each node vertically
     for (List<SankeyNode> column in columns) {
-      double y = y0;
+      double y = topBound;
       for (SankeyNode node in column) {
         node.top = y;
         node.bottom = y + node.value * ky;
@@ -280,7 +279,7 @@ class Sankey {
         }
       }
       // Add extra vertical spacing
-      double spacing = (y1 - y + nodePadding) / (column.length + 1);
+      double spacing = (bottomBound - y + nodePadding) / (column.length + 1);
       for (int i = 0; i < column.length; i++) {
         column[i].top += spacing * (i + 1);
         column[i].bottom += spacing * (i + 1);
@@ -299,7 +298,8 @@ class Sankey {
   void _computeNodeBreadths(List<SankeyNode> nodes) {
     List<List<SankeyNode>> columns = _computeNodeLayers(nodes);
     int maxNodes = columns.map((col) => col.length).reduce(max);
-    double effectiveNodePadding = min(nodePadding, (y1 - y0) / (maxNodes - 1));
+    double effectiveNodePadding =
+        min(nodePadding, (bottomBound - topBound) / (maxNodes - 1));
     nodePadding = effectiveNodePadding;
     _initializeNodeBreadths(columns);
     // Apply iterative relaxation.
@@ -313,8 +313,8 @@ class Sankey {
 
   /// Computes the vertical positions for links based on the positions of the nodes
   ///
-  /// For each node, this method calculates the starting position [y0] for outgoing links
-  /// and the ending position [y1] for incoming links, adjusting for the link width
+  /// For each node, this method calculates the starting position for outgoing links
+  /// and the ending position for incoming links, adjusting for the link width
   void _computeLinkBreadths(List<SankeyNode> nodes) {
     for (SankeyNode node in nodes) {
       double offset = node.top;
@@ -342,9 +342,8 @@ class Sankey {
         double ySum = 0;
         double weightSum = 0;
         for (SankeyLink link in target.targetLinks) {
-          SankeyNode source = link.source as SankeyNode;
-          double idealY = _targetTop(source, target);
-          double weight = link.value * (target.layer - source.layer);
+          double idealY = _targetTop(link.source, target);
+          double weight = link.value * (target.layer - link.source.layer);
           ySum += idealY * weight;
           weightSum += weight;
         }
@@ -373,9 +372,8 @@ class Sankey {
         double ySum = 0;
         double weightSum = 0;
         for (SankeyLink link in source.sourceLinks) {
-          SankeyNode target = link.target as SankeyNode;
-          double idealY = _sourceTop(source, target);
-          double weight = link.value * (target.layer - source.layer);
+          double idealY = _sourceTop(source, link.target);
+          double weight = link.value * (link.target.layer - source.layer);
           ySum += idealY * weight;
           weightSum += weight;
         }
@@ -405,8 +403,8 @@ class Sankey {
         column, column[mid].top - nodePadding, mid - 1, alpha);
     _resolveCollisionsTopToBottom(
         column, column[mid].bottom + nodePadding, mid + 1, alpha);
-    _resolveCollisionsBottomToTop(column, y1, column.length - 1, alpha);
-    _resolveCollisionsTopToBottom(column, y0, 0, alpha);
+    _resolveCollisionsBottomToTop(column, bottomBound, column.length - 1, alpha);
+    _resolveCollisionsTopToBottom(column, topBound, 0, alpha);
   }
 
   /// Adjusts node positions from top downwards to resolve collisions
@@ -441,19 +439,17 @@ class Sankey {
   /// of connected nodes
   ///
   /// For consistency with d3‑sankey:
-  /// - [sourceLinks] are sorted by the [y0] of their target nodes
-  /// - [targetLinks] are sorted by the [y0] of their source nodes
+  /// - [sourceLinks] are sorted by the [top] position of their target nodes
+  /// - [targetLinks] are sorted by the [top] position of their source nodes
   /// In the event of a tie, the link's index is used as a tie-breaker
   void _reorderNodeLinks(SankeyNode node) {
     if (linkSort == null) {
       node.sourceLinks.sort((a, b) {
-        int cmp =
-            (a.target as SankeyNode).top.compareTo((b.target as SankeyNode).top);
+        int cmp = a.target.top.compareTo(b.target.top);
         return cmp != 0 ? cmp : a.index.compareTo(b.index);
       });
       node.targetLinks.sort((a, b) {
-        int cmp =
-            (a.source as SankeyNode).top.compareTo((b.source as SankeyNode).top);
+        int cmp = a.source.top.compareTo(b.source.top);
         return cmp != 0 ? cmp : a.index.compareTo(b.index);
       });
     }
@@ -467,15 +463,11 @@ class Sankey {
     if (linkSort == null) {
       for (SankeyNode node in nodes) {
         node.sourceLinks.sort((a, b) {
-          int cmp = (a.target as SankeyNode)
-              .top
-              .compareTo((b.target as SankeyNode).top);
+          int cmp = a.target.top.compareTo(b.target.top);
           return cmp != 0 ? cmp : a.index.compareTo(b.index);
         });
         node.targetLinks.sort((a, b) {
-          int cmp = (a.source as SankeyNode)
-              .top
-              .compareTo((b.source as SankeyNode).top);
+          int cmp = a.source.top.compareTo(b.source.top);
           return cmp != 0 ? cmp : a.index.compareTo(b.index);
         });
       }
@@ -490,13 +482,11 @@ class Sankey {
   double _targetTop(SankeyNode source, SankeyNode target) {
     double y = source.top - (source.sourceLinks.length - 1) * nodePadding / 2;
     for (SankeyLink link in source.sourceLinks) {
-      SankeyNode t = link.target as SankeyNode;
-      if (t == target) break;
+      if (link.target == target) break;
       y += link.width + nodePadding;
     }
     for (SankeyLink link in target.targetLinks) {
-      SankeyNode s = link.source as SankeyNode;
-      if (s == source) break;
+      if (link.source == source) break;
       y -= link.width;
     }
     return y;
@@ -510,13 +500,11 @@ class Sankey {
   double _sourceTop(SankeyNode source, SankeyNode target) {
     double y = target.top - (target.targetLinks.length - 1) * nodePadding / 2;
     for (SankeyLink link in target.targetLinks) {
-      SankeyNode s = link.source as SankeyNode;
-      if (s == source) break;
+      if (link.source == source) break;
       y += link.width + nodePadding;
     }
     for (SankeyLink link in source.sourceLinks) {
-      SankeyNode t = link.target as SankeyNode;
-      if (t == target) break;
+      if (link.target == target) break;
       y -= link.width;
     }
     return y;

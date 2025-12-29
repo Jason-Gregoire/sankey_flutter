@@ -31,10 +31,10 @@ Sankey generateSankeyLayout({
   return Sankey()
     ..nodeWidth = nodeWidth
     ..nodePadding = nodePadding
-    ..x0 = 0
-    ..y0 = 0
-    ..x1 = width
-    ..y1 = height;
+    ..leftBound = 0
+    ..topBound = 0
+    ..rightBound = width
+    ..bottomBound = height;
 }
 
 /// A default palette of 15 visually distinct colors for use in node theming
@@ -88,16 +88,16 @@ class SankeyNodeThemeManager {
 
 /// Generates a default node color map for a list of [SankeyNode] objects
 ///
-/// Each node's [label] is used to assign a color from [defaultNodeColors] in sequence
-/// (cycling through the palette). This is useful as a convenience method when no
-/// custom node colors are provided
+/// Each node's [displayLabel] is used to assign a color from [defaultNodeColors]
+/// in sequence (cycling through the palette). This is useful as a convenience
+/// method when no custom node colors are provided.
 ///
-/// Returns a [Map] with the node label as key and the assigned [Color] as value
+/// Returns a [Map] with the node's display label as key and the assigned [Color] as value
 Map<String, Color> generateDefaultNodeColorMap(List<SankeyNode> nodes) {
   final Map<String, Color> colorMap = {};
   for (int i = 0; i < nodes.length; i++) {
-    final label = nodes[i].label;
-    if (label != null && !colorMap.containsKey(label)) {
+    final label = nodes[i].displayLabel;
+    if (!colorMap.containsKey(label)) {
       colorMap[label] = defaultNodeColors[i % defaultNodeColors.length];
     }
   }
@@ -137,13 +137,15 @@ class SankeyDataSet {
 ///
 /// The [selectedNodeId] parameter indicates an optional node ID for which
 /// special highlighting may be applied.
+/// The [showTexture] parameter controls whether texture patterns are drawn on links.
 /// Returns an instance of [InteractiveSankeyPainter].
 InteractiveSankeyPainter buildInteractiveSankeyPainter({
   required List<SankeyNode> nodes,
   required List<SankeyLink> links,
   required Map<String, Color> nodeColors,
   int? selectedNodeId,
-  final bool showLabels = true,
+  bool showLabels = true,
+  bool showTexture = true,
 }) {
   return InteractiveSankeyPainter(
     nodes: nodes,
@@ -151,6 +153,7 @@ InteractiveSankeyPainter buildInteractiveSankeyPainter({
     nodeColors: nodeColors,
     selectedNodeId: selectedNodeId,
     showLabels: showLabels,
+    showTexture: showTexture,
   );
 }
 
@@ -159,41 +162,50 @@ InteractiveSankeyPainter buildInteractiveSankeyPainter({
 /// The [SankeyDiagramWidget] integrates gesture detection for tapping nodes and
 /// renders the diagram using a [CustomPaint] widget. It takes a [SankeyDataSet] as
 /// its data source, a node colors map, and an optional [selectedNodeId] along with a
-/// callback [onNodeTap] which is called when a node is tapped
+/// callback [onNodeSelected] which is called when a node is tapped.
 ///
-/// The [size] parameter specifies the drawing area for the diagram
+/// The [size] parameter specifies the drawing area for the diagram.
+/// The [showLabels] parameter controls whether node labels are displayed.
+/// The [showTexture] parameter controls whether texture patterns are drawn on links.
 class SankeyDiagramWidget extends StatelessWidget {
+  /// The dataset containing nodes and links
   final SankeyDataSet data;
+
+  /// Map of node labels to their display colors
   final Map<String, Color> nodeColors;
+
+  /// ID of the currently selected node, if any
   final int? selectedNodeId;
-  final Function(int?)? onNodeTap;
+
+  /// Callback invoked when a node is tapped (or null is passed when tapping empty space)
   final Function(SankeyNode?)? onNodeSelected;
+
+  /// The size of the diagram canvas
   final Size size;
+
+  /// Whether to display node labels
   final bool showLabels;
+
+  /// Whether to display texture patterns on links
+  final bool showTexture;
 
   const SankeyDiagramWidget({
     Key? key,
     required this.data,
     required this.nodeColors,
     this.selectedNodeId,
-    @Deprecated('prefer onNodeSelected which supplies all the node features, including id')
-    this.onNodeTap,
     this.onNodeSelected,
     this.size = const Size(1000, 600),
     this.showLabels = true,
+    this.showTexture = true,
   }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (details) {
-          final tapped = detectTappedNode(data.nodes, details.localPosition);
-        if (onNodeTap != null) {
-          onNodeTap!(tapped?.id);
-        }
-        if (onNodeSelected != null) {
-          onNodeSelected!(tapped);
-        }
+        final tapped = detectTappedNode(data.nodes, details.localPosition);
+        onNodeSelected?.call(tapped);
       },
       child: CustomPaint(
         size: size,
@@ -203,6 +215,7 @@ class SankeyDiagramWidget extends StatelessWidget {
           nodeColors: nodeColors,
           selectedNodeId: selectedNodeId,
           showLabels: showLabels,
+          showTexture: showTexture,
         ),
       ),
     );

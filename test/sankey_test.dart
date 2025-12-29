@@ -24,8 +24,8 @@ Map<String, dynamic> roundNode(SankeyNode node) {
 }
 
 Map<String, dynamic> roundLink(SankeyLink link) {
-  final source = link.source as SankeyNode;
-  final target = link.target as SankeyNode;
+  final source = link.source;
+  final target = link.target;
 
   return {
     "source": roundNode(source),

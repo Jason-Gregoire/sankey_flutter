@@ -5,57 +5,51 @@ import 'package:sankey_flutter/sankey_helpers.dart';
 import 'package:sankey_flutter/sankey_link.dart';
 import 'package:sankey_flutter/sankey_node.dart';
 
-/// The entry point of the Sankey Complex Example application
-///
-/// This function initializes the app by running [SankeyComplexExampleApp]
 void main() {
-  runApp(SankeyComplexExampleApp());
+  runApp(const SankeyComplexExampleApp());
 }
 
-/// A stateless widget that defines the overall structure of the Sankey Diagram Example App
-///
-/// It sets the app title, theme, and uses a [Scaffold] to provide an app bar and a body
-/// that renders the Sankey diagram
 class SankeyComplexExampleApp extends StatelessWidget {
+  const SankeyComplexExampleApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Complex Sankey Diagram Example',
       home: Scaffold(
-        appBar: AppBar(title: Text('Complex Sankey Diagram')),
-        body: SankeyComplexDiagramWidget(),
+        appBar: AppBar(title: const Text('Complex Sankey Diagram')),
+        body: const SankeyComplexDiagramWidget(),
       ),
     );
   }
 }
 
-/// A stateful widget that manages the interactive Sankey diagram
-///
-/// This widget builds a Sankey diagram using data defined in the [initState] method
-/// It also handles user tap interactions to select nodes
 class SankeyComplexDiagramWidget extends StatefulWidget {
+  const SankeyComplexDiagramWidget({super.key});
+
   @override
-  _SankeyComplexDiagramWidgetState createState() =>
+  State<SankeyComplexDiagramWidget> createState() =>
       _SankeyComplexDiagramWidgetState();
 }
 
-/// The state class for [SankeyComplexDiagramWidget]
-///
-/// It defines the nodes, links, node colors, and handles layout computation and tap interactions
-/// Changes in state trigger a repaint to reflect node selection and updates to the diagram
 class _SankeyComplexDiagramWidgetState
     extends State<SankeyComplexDiagramWidget> {
   late List<SankeyNode> nodes;
   late List<SankeyLink> links;
   late Map<String, Color> nodeColors;
   int? selectedNodeId;
-  late SankeyDataSet sankeyDataSet;
+
+  // Track the last computed size to avoid unnecessary relayouts
+  Size? _lastLayoutSize;
+  SankeyDataSet? _sankeyDataSet;
 
   @override
   void initState() {
     super.initState();
+    _initializeData();
+  }
 
-    // Define the list of nodes across multiple layers
+  void _initializeData() {
     nodes = [
       SankeyNode(id: 0, label: 'Salary'),
       SankeyNode(id: 1, label: 'Freelance'),
@@ -74,7 +68,6 @@ class _SankeyComplexDiagramWidgetState
       SankeyNode(id: 12, label: 'Donations'),
     ];
 
-    // Define the links between nodes with specified flow values
     links = [
       SankeyLink(source: nodes[0], target: nodes[3], value: 70),
       SankeyLink(source: nodes[1], target: nodes[3], value: 30),
@@ -92,26 +85,40 @@ class _SankeyComplexDiagramWidgetState
       SankeyLink(source: nodes[14], target: nodes[12], value: 1),
     ];
 
-    // Automatically generate a color map for the nodes using their labels
     nodeColors = generateDefaultNodeColorMap(nodes);
+  }
 
-    // Combine the nodes and links into a data set
-    sankeyDataSet = SankeyDataSet(nodes: nodes, links: links);
+  /// Computes the Sankey layout for the given size.
+  /// Only recomputes if the size has changed.
+  SankeyDataSet _computeLayout(Size size) {
+    if (_sankeyDataSet != null && _lastLayoutSize == size) {
+      return _sankeyDataSet!;
+    }
 
-    // Generate the layout using a helper that configures the layout engine
+    // Reset node positions before relayout
+    for (final node in nodes) {
+      node.left = 0;
+      node.right = 0;
+      node.top = 0;
+      node.bottom = 0;
+      node.sourceLinks = [];
+      node.targetLinks = [];
+    }
+
+    final sankeyDataSet = SankeyDataSet(nodes: nodes, links: links);
     final sankey = generateSankeyLayout(
-      width: 1000,
-      height: 600,
+      width: size.width,
+      height: size.height,
       nodeWidth: 20,
       nodePadding: 15,
     );
     sankeyDataSet.layout(sankey);
+
+    _lastLayoutSize = size;
+    _sankeyDataSet = sankeyDataSet;
+    return sankeyDataSet;
   }
 
-  /// Callback for handling tap events on nodes
-  ///
-  /// When a node is tapped, its [id] is stored in [selectedNodeId],
-  /// triggering a rebuild that highlights the node
   void _handleNodeTap(SankeyNode? node) {
     setState(() {
       selectedNodeId = node?.id;
@@ -120,17 +127,36 @@ class _SankeyComplexDiagramWidgetState
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: SingleChildScrollView(
-        child: SankeyDiagramWidget(
-          data: sankeyDataSet,
-          nodeColors: nodeColors,
-          selectedNodeId: selectedNodeId,
-          onNodeSelected: _handleNodeTap,
-          size: const Size(1000, 600),
-          showLabels: true,
-        ),
-      ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Use available width, with min/max constraints for usability
+        final width = constraints.maxWidth.clamp(400.0, 1200.0);
+        // Maintain a reasonable aspect ratio (5:3)
+        final height = (width * 0.6).clamp(300.0, 800.0);
+        final size = Size(width, height);
+
+        final sankeyDataSet = _computeLayout(size);
+
+        return Center(
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: SankeyDiagramWidget(
+                  data: sankeyDataSet,
+                  nodeColors: nodeColors,
+                  selectedNodeId: selectedNodeId,
+                  onNodeSelected: _handleNodeTap,
+                  size: size,
+                  showLabels: true,
+                  showTexture: true,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }

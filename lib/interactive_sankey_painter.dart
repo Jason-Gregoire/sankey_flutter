@@ -41,11 +41,11 @@ class InteractiveSankeyPainter extends SankeyPainter {
   void paint(Canvas canvas, Size size) {
     // --- Draw enhanced links ---
     for (SankeyLink link in links) {
-      final source = link.source as SankeyNode;
-      final target = link.target as SankeyNode;
+      final source = link.source;
+      final target = link.target;
 
-      var sourceColor = nodeColors[source.label] ?? Colors.blue;
-      var targetColor = nodeColors[target.label] ?? Colors.blue;
+      var sourceColor = nodeColors[source.displayLabel] ?? Colors.blue;
+      var targetColor = nodeColors[target.displayLabel] ?? Colors.blue;
 
       // Highlight links connected to the selected node
       final isConnected = (selectedNodeId != null) &&
@@ -86,18 +86,19 @@ class InteractiveSankeyPainter extends SankeyPainter {
 
     // --- Draw colored nodes and labels with selection borders ---
     for (SankeyNode node in nodes) {
-      final color = nodeColors[node.label] ?? Colors.blue;
-      final rect =
-          Rect.fromLTWH(node.left, node.top, node.right - node.left, node.bottom - node.top);
+      final color = nodeColors[node.displayLabel] ?? Colors.blue;
+      final rect = Rect.fromLTWH(
+          node.left, node.top, node.right - node.left, node.bottom - node.top);
       final isSelected = selectedNodeId != null && node.id == selectedNodeId;
 
       canvas.drawRect(rect, Paint()..color = color);
 
       if (isSelected) {
         final hsl = HSLColor.fromColor(color);
-        final contrast = hsl.withHue(hsl.hue > 180 ? hsl.hue - 180 : hsl.hue + 180);
+        final contrast =
+            hsl.withHue(hsl.hue > 180 ? hsl.hue - 180 : hsl.hue + 180);
         final borderPaint = Paint()
-          ..color = contrast.toColor() 
+          ..color = contrast.toColor()
           ..style = PaintingStyle.stroke
           ..strokeWidth = 4;
         canvas.drawRect(rect, borderPaint);
@@ -109,12 +110,12 @@ class InteractiveSankeyPainter extends SankeyPainter {
         canvas.drawRect(rect.deflate(2), borderPaint);
       }
 
-      final isDark = color.computeLuminance() < 0.05;
-      final textColor = isDark ? Colors.white : Colors.black;
+      if (showLabels) {
+        final isDark = color.computeLuminance() < 0.05;
+        final textColor = isDark ? Colors.white : Colors.black;
 
-      if (node.label != null && showLabels) {
         final textSpan = TextSpan(
-          text: node.label,
+          text: node.displayLabel,
           style: TextStyle(
             color: textColor,
             fontSize: 10,
